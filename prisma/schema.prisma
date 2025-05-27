@@ -1,0 +1,260 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  DELETED
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+model Address {
+  id        String  @id @default(uuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  isDefault Boolean @default(false)
+  address   String
+  city      String  @default("Shillong")
+  state     String  @default("Meghalaya")
+  zip       String
+  country   String  @default("India")
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id      String      @id @default(uuid())
+  userId  String
+  user    User        @relation(fields: [userId], references: [id])
+  status  OrderStatus @default(PENDING)
+  orderAt DateTime    @default(now())
+  total   Int
+
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+  deletedAt DateTime? @db.Timestamp()
+
+  @@index([orderAt])
+  @@index([status])
+  @@index([userId])
+}
+
+model User {
+  id         String     @id @default(uuid())
+  name       String     @db.VarChar(255)
+  profilePic String?    @db.VarChar(255)
+  isVerified Boolean    @default(false)
+  role       Role       @default(USER)
+  auth       Auth?
+  createdAt  DateTime   @default(now()) @db.Timestamp()
+  updatedAt  DateTime   @updatedAt @db.Timestamp()
+  deletedAt  DateTime?  @db.Timestamp()
+  emails     Email[]
+  cart       Cart[]
+  wishList   WishList[]
+  address    Address[]
+  orders     Order[]
+  likes      Like[]
+  comments   Comment[]
+
+  @@index([role])
+  @@index([name])
+  @@index([deletedAt])
+}
+
+model WishList {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  productId String    @unique
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  deletedAt DateTime? @db.Timestamp()
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+
+  @@index([userId, productId])
+}
+
+model Email {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  email  String   @unique @db.VarChar(255) // optional: use for logging or recipient if useful
+  sentTo String   @db.VarChar(255) // the address where the email was sent
+  count  Int      @default(0) // total sends to this recipient
+  sentAt DateTime @default(now()) // timestamp of when the email was sent
+
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+  deletedAt DateTime? @db.Timestamp()
+
+  @@index([userId, sentTo, sentAt])
+}
+
+model Auth {
+  id           String    @id @default(uuid())
+  isInternal   Boolean   @default(false)
+  email        String    @unique
+  phone        String?   @unique @db.VarChar(20)
+  userId       String    @unique
+  otp          Int       @default(0)
+  isOtpRevoked Boolean   @default(false)
+  otpExpiresAt DateTime  @db.Timestamp()
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokens       Token[]
+  status       Status    @default(ACTIVE)
+  createdAt    DateTime  @default(now()) @db.Timestamp()
+  updatedAt    DateTime  @updatedAt @db.Timestamp()
+  deletedAt    DateTime? @db.Timestamp()
+
+  @@index([isInternal])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model Token {
+  id         String    @id @default(uuid())
+  token      String    @unique @db.Text
+  agent      String    @db.VarChar(255)
+  authId     String
+  auth       Auth      @relation(fields: [authId], references: [id], onDelete: Cascade)
+  issuedAt   DateTime  @default(now()) @db.Timestamp()
+  expiresAt  DateTime  @db.Timestamp()
+  lastUsedAt DateTime? @db.Timestamp()
+  revoked    Boolean   @default(false)
+  revokedAt  DateTime? @db.Timestamp()
+  revokedBy  String?   @db.VarChar(255)
+  deletedAt  DateTime? @db.Timestamp()
+  createdAt  DateTime  @default(now()) @db.Timestamp()
+  updatedAt  DateTime  @updatedAt @db.Timestamp()
+
+  @@index([authId, token])
+  @@index([revokedAt])
+  @@index([lastUsedAt])
+  @@index([deletedAt])
+}
+
+model Category {
+  id    String @id @default(uuid())
+  title String @unique
+
+  imageId   String
+  image     Image    @relation(fields: [imageId], references: [id])
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?
+
+  deletedAt DateTime? @db.Timestamp()
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+}
+
+enum StockStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+}
+
+model Cart {
+  id       String @id @default(uuid())
+  quantity Int    @default(1)
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  deletedAt DateTime? @db.Timestamp()
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model Product {
+  id              String      @id @default(uuid())
+  title           String
+  reviews         Int         @default(0)
+  price           Int
+  discountedPrice Int
+  stockStatus     StockStatus @default(IN_STOCK)
+  imgs            Image?
+
+  categories Category[]
+  cart       Cart[]
+  wishList   WishList[]
+
+  deletedAt DateTime? @db.Timestamp()
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+  likes     Like[]
+  comments  Comment[]
+
+  @@index([deletedAt])
+  @@index([price])
+  @@index([stockStatus])
+  @@index([discountedPrice])
+}
+
+model Image {
+  id         String   @id @default(uuid())
+  productId  String   @unique
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  thumbnails String[]
+  previews   String[]
+
+  deletedAt DateTime?  @db.Timestamp()
+  createdAt DateTime   @default(now()) @db.Timestamp()
+  updatedAt DateTime   @updatedAt @db.Timestamp()
+  category  Category[]
+
+  @@index([productId])
+  @@index([deletedAt])
+}
+
+model Like {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  deletedAt DateTime? @db.Timestamp()
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  deletedAt DateTime? @db.Timestamp()
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+}

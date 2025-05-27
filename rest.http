@@ -1,0 +1,103 @@
+@token=eyJhbGciOiJIUzI1NiJ9.eyJpZCI6ImVmMmYxYjUwLTE3NmMtNDNjMS04M2RlLTRiYWVmMmM0OTYyNCIsImlhdCI6MTc0ODExMzcwOSwic3ViIjoidG9rZW4ifQ.CBOvW-RgiWDB9xh7PbZ0xkh7ggp6JNocWnR9NfiX3Bw
+
+###
+# @name LOGIN_INIT
+POST http://localhost:3000/api/auth/init
+Content-Type: application/json
+
+{
+  "email": "jyrwaboys@gmail.com"
+}
+
+###
+# @name LOGIN
+POST http://localhost:3000/api/auth
+Content-Type: application/json
+
+{
+  "email": "jyrwaboys@gmail.com",
+  "otp": "545555"
+}
+
+###
+# @name Me 
+GET http://localhost:3000/api/auth
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+###
+# @name ADD_PRODUCT 
+POST http://localhost:3000/api/product
+Content-Type: application/json
+
+{
+  "title": "Havit HV-G69 USB Gamepad",
+  "reviews": 15,
+  "price": 59.0,
+  "discountedPrice": 29.0,
+  "imgs": {
+    "thumbnails": [
+      "/images/products/product-1-sm-1.png",
+      "/images/products/product-1-sm-2.png"
+    ],
+    "previews": [
+      "/images/products/product-1-bg-1.png",
+      "/images/products/product-1-bg-2.png"
+    ]
+  }
+}
+
+###
+# @name GET_PRODUCT_CATEGORY 
+GET http://localhost:3000/api/product/54568faa-f782-4029-8f6d-5fa6abbc91c8/category
+
+###
+# @name ADD_PRODUCT_CATEGORY 
+PUT http://localhost:3000/api/product/54568faa-f782-4029-8f6d-5fa6abbc91c8/category
+Content-Type: application/json
+
+{
+  "id":"b5f28530-1449-459d-a4dd-18a3539b3762"
+}
+
+###
+# @name GET_CATEGORY
+GET http://localhost:3000/api/category
+
+###
+# @name ADD_CATEGORY
+POST http://localhost:3000/api/category
+Content-Type: application/json
+
+{
+  "title":"Carts"
+}
+
+###
+# @name ADD_PRODUCT_TO_CART
+POST http://localhost:3000/api/cart
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "productId":"54568faa-f782-4029-8f6d-5fa6abbc91c8",
+  "quantity":1
+}
+
+###
+# @name REMOVE_PRODUCT_FROM_CART
+PUT http://localhost:3000/api/cart/remove-product
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "productId":"54568faa-f782-4029-8f6d-5fa6abbc91c8",
+  "quantity":1,
+  "userId":"ef2f1b50-176c-43c1-83de-4baef2c49624"
+}
+
+### 
+# @name GET_USER_CART 
+GET http://localhost:3000/api/cart
+Content-Type: application/json
+Authorization: Bearer {{token}}

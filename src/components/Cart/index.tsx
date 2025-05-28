@@ -53,11 +53,7 @@ const Cart = () => {
                   {/* <!-- cart item --> */}
                   {cartItems.length > 0 &&
                     cartItems.map((item, key) => (
-                      <SingleItem
-                        quantity={item.quantity}
-                        item={item.product}
-                        key={key}
-                      />
+                      <SingleItem item={item} key={key} />
                     ))}
                 </div>
               </div>

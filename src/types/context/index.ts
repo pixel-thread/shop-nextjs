@@ -6,9 +6,7 @@ type CartProps = {
 };
 
 export interface CartT extends Product {
-  id: string;
   quantity: number;
-  product: Product;
 }
 
 export type CartContextType = {

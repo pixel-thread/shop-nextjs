@@ -12,6 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { totalProductPrice } from "@/types/totalProductPrice";
 
 const CartSidebarModal = () => {
   const { cart: cartItems, isLoadingCart } = useCart();
@@ -23,21 +24,21 @@ const CartSidebarModal = () => {
     [onOpenValueChange],
   );
 
-  // add all items price
-  const totalPrice = "TODO";
+  const totalPrice = totalProductPrice(cartItems);
 
   if (isLoadingCart) {
     return null;
   }
+
   return (
     <Sheet
       defaultOpen={false}
       onOpenChange={onOpenValueChange}
       open={isCartModalOpen}
     >
-      <SheetContent side="right">
+      <SheetContent side="right" className="min-w-2xl w-full">
         <div className="flex items-center justify-end">
-          <div className="w-full max-w-[500px]  sm:px-7.5 relative">
+          <div className="w-full sm:px-7.5 relative">
             <SheetHeader className="flex items-center justify-between pb-7 border-b border-gray-3 mb-7.5">
               <SheetTitle className="font-medium text-dark text-lg sm:text-2xl">
                 Cart View
@@ -49,7 +50,7 @@ const CartSidebarModal = () => {
                 {/* <!-- cart item --> */}
                 {cartItems.length > 0 ? (
                   cartItems.map((item, key) => (
-                    <SingleItem key={key} item={item.product} />
+                    <SingleItem key={key} item={item} />
                   ))
                 ) : (
                   <EmptyCart />

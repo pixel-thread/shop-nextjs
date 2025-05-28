@@ -22,16 +22,15 @@ export async function GET(req: Request) {
     }
 
     const cart = await getUserCartItems({ id: userId });
-
-    const data = cart.map((item) => {
+    const cartProduct = cart.map((item) => {
       return {
         quantity: item.quantity,
-        ...item,
+        ...item.product,
       };
     });
 
     return SuccessResponse({
-      data: data,
+      data: cartProduct,
       message: "Successfully fetched cart",
     });
   } catch (error) {

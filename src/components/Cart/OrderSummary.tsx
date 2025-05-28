@@ -1,10 +1,10 @@
 import { useCart } from "@/hooks/cart/useCart";
+import { totalProductPrice } from "@/types/totalProductPrice";
 import React from "react";
 
 const OrderSummary = () => {
-  const { cart } = useCart();
-  const cartItems = cart;
-  const totalPrice = "TODO";
+  const { cart: cartItems } = useCart();
+  const totalPrice = totalProductPrice(cartItems);
 
   return (
     <div className="lg:max-w-[455px] w-full">

@@ -3,7 +3,8 @@ import React from "react";
 import Image from "next/image";
 import { useCart } from "@/hooks/cart/useCart";
 
-const SingleItem = ({ item, quantity }) => {
+const SingleItem = ({ item }) => {
+  const quantity = item.quantity;
   const { removeAllFromCart, updateItemOnCart } = useCart();
 
   const handleIncreaseQuantity = () => {
@@ -25,7 +26,7 @@ const SingleItem = ({ item, quantity }) => {
               <Image
                 width={200}
                 height={200}
-                src={item.imgs?.thumbnails[0]}
+                src={item?.imgs?.thumbnails[0]}
                 alt="product"
               />
             </div>

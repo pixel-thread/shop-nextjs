@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 const Shipping = () => {
-  const [dropdown, setDropdown] = useState(false);
+  const [dropdown, setDropdown] = useState(true);
 
   return (
     <div className="bg-white shadow-1 rounded-[10px] mt-7.5">

@@ -27,6 +27,7 @@ const CartSidebarModal = () => {
   const totalPrice = totalProductPrice(cartItems);
 
   if (isLoadingCart) {
+    // TODO: Add loading state
     return null;
   }
 

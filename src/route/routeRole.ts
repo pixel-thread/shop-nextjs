@@ -12,6 +12,12 @@ export const routeRoles: RoleRoute[] = [
     needAuth: false,
   },
   {
+    url: "/shop-without-sidebar/*",
+    role: ["SUPER_ADMIN", "ADMIN", "USER"],
+    needAuth: true,
+    redirect: "/auth",
+  },
+  {
     url: "/contact/*",
     role: ["SUPER_ADMIN", "ADMIN", "USER"],
     needAuth: false,

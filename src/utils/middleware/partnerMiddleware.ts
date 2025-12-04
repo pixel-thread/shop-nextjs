@@ -1,42 +1,15 @@
-import { verifyToken } from "../token/verifyToken";
-import { getUserById } from "@/services/user/getUserById";
 import { UnauthorizedError } from "../errors/unAuthError";
-import { prisma } from "@/lib/db";
+import { requiredToken } from "./tokenMiddleware";
 
 export async function requiredAdminMiddleware(req: Request) {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.split(" ")[1];
-
-  if (!token) {
-    throw new UnauthorizedError("Unauthorized");
+  const user = await requiredToken(req);
+  switch (user.role) {
+    case "SUPER_ADMIN":
+      break;
+    case "ADMIN":
+      break;
+    default:
+      throw new UnauthorizedError("Permission Denied");
   }
-
-  const decoded = await verifyToken(token);
-
-  if (!decoded?.id) {
-    throw new UnauthorizedError("Unauthorized");
-  }
-
-  const user = await getUserById({ id: decoded.id });
-
-  if (!user) {
-    throw new UnauthorizedError("Unauthorized");
-  }
-
-  const tokenRecord = await prisma.token.findFirst({
-    where: {
-      authId: user?.auth?.id,
-      token: token,
-      revoked: false,
-      expiresAt: { gt: new Date() },
-    },
-  });
-
-  if (!tokenRecord) {
-    throw new UnauthorizedError("Unauthorized");
-  }
-
-  if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN") {
-    throw new UnauthorizedError("Permission Denied");
-  }
+  return user;
 }

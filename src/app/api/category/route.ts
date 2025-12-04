@@ -8,7 +8,7 @@ import { categorySchema } from "@/utils/validation/category";
 
 export async function GET(req: Request) {
   try {
-    requiredAdminMiddleware(req);
+    await requiredAdminMiddleware(req);
     const categories = await getAllCategory();
     return SuccessResponse({ data: categories });
   } catch (error) {
@@ -28,10 +28,10 @@ export async function POST(req: Request) {
       });
     }
 
-    const category = await createCategory({ title: body.title });
+    // const category = await createCategory({ title: body.title });
     return SuccessResponse({
       message: "Category created successfully",
-      data: category,
+      data: null,
     });
   } catch (error) {
     return handleApiErrors(error);

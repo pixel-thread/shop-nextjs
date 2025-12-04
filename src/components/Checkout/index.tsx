@@ -149,6 +149,7 @@ export default Checkout;
 
 function RazorpayButton({ options, label = "Pay" }) {
   const handlePayment = useCallback(() => {
+    // @ts-ignore
     const paymentObject = new window.Razorpay(options);
     paymentObject.on("payment.failed", function (response: any) {
       alert(response.error.description);

@@ -1,9 +1,10 @@
+import { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/db";
 
 type Props = {
-  title: string;
+  data: Prisma.CategoryCreateInput;
 };
 
-export async function createCategory({ title }: Props) {
-  return await prisma.category.create({ data: { title } });
+export async function createCategory({ data }: Props) {
+  return await prisma.category.create({ data });
 }

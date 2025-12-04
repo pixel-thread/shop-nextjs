@@ -7,7 +7,7 @@ export async function superAdminMiddleware(req: Request) {
     throw new UnauthorizedError("Unauthorized");
   }
 
-  if (auth.user.role !== "SUPER_ADMIN") {
+  if (auth.role !== "SUPER_ADMIN") {
     throw new UnauthorizedError("Permission Denied");
   }
 }

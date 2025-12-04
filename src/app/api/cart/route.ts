@@ -4,24 +4,15 @@ import { addProductToCart } from "@/services/cart/addProductToCart";
 import { getUserCartItems } from "@/services/cart/getUserCartItems";
 import { updateCartProductQuantity } from "@/services/cart/updateProductQuantity";
 import { getProductById } from "@/services/product/getProductById";
-import { getUserById } from "@/services/user/getUserById";
 import { handleApiErrors } from "@/utils/errors/handleApiErrors";
 import { requiredToken } from "@/utils/middleware/tokenMiddleware";
-import { verifyReqToken } from "@/utils/token/verifyReqToken";
 import { cartSchema } from "@/utils/validation/cart";
 
 export async function GET(req: Request) {
   try {
-    await requiredToken(req);
+    const user = await requiredToken(req);
 
-    const userId = await verifyReqToken(req);
-    const isUserExist = await getUserById({ id: userId });
-
-    if (!isUserExist) {
-      return ErrorResponse({ message: "User not found", status: 404 });
-    }
-
-    const cart = await getUserCartItems({ id: userId });
+    const cart = await getUserCartItems({ id: user.id });
     const cartProduct = cart.map((item) => {
       return {
         quantity: item.quantity,
@@ -40,7 +31,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const userId = await verifyReqToken(req);
+    const user = await requiredToken(req);
     const body = cartSchema.parse(await req.json());
 
     const isProductExist = await getProductById({ id: body.productId });
@@ -50,7 +41,7 @@ export async function POST(req: Request) {
 
     const addProduct = await addProductToCart({
       data: {
-        userId: userId,
+        userId: user.id,
         productId: body.productId,
         quantity: body.quantity,
       },
@@ -67,15 +58,8 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const userId = await verifyReqToken(req);
-
+    const user = await requiredToken(req);
     const body = cartSchema.parse(await req.json());
-
-    const user = await getUserById({ id: userId });
-
-    if (!user) {
-      return ErrorResponse({ message: "User not found", status: 404 });
-    }
 
     const product = await getProductById({ id: body.productId });
 
@@ -85,7 +69,7 @@ export async function PUT(req: Request) {
 
     const updateProductCart = await updateCartProductQuantity({
       data: {
-        userId: userId,
+        userId: user.id,
         productId: body.productId,
         quantity: body.quantity,
       },

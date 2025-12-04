@@ -27,24 +27,57 @@ enum Role {
 }
 
 model Address {
-  id        String  @id @default(uuid())
+  id        String     @id @default(uuid())
   userId    String
-  user      User    @relation(fields: [userId], references: [id])
-  isDefault Boolean @default(false)
+  user      User       @relation(fields: [userId], references: [id])
+  isDefault Boolean    @default(false)
   address   String
-  city      String  @default("Shillong")
-  state     String  @default("Meghalaya")
+  address2  String?
+  phone     String
+  city      String     @default("Shillong")
+  state     String     @default("Meghalaya")
   zip       String
-  country   String  @default("India")
+  country   String     @default("India")
+  delivery  Delivery[]
 }
 
-model Order {
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Delivery {
   id        String    @id @default(uuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  orderId   String
+  addressId String
+  address   Address   @relation(fields: [addressId], references: [id])
+  order     Order?
+  note      String?
   createdAt DateTime  @default(now()) @db.Timestamp()
   updatedAt DateTime  @updatedAt @db.Timestamp()
   deletedAt DateTime? @db.Timestamp()
+}
+
+model Order {
+  id      String      @id @default(uuid())
+  userId  String
+  user    User        @relation(fields: [userId], references: [id])
+  status  OrderStatus @default(PENDING)
+  orderAt DateTime    @default(now())
+  total   Int
+
+  createdAt  DateTime  @default(now()) @db.Timestamp()
+  updatedAt  DateTime  @updatedAt @db.Timestamp()
+  deletedAt  DateTime? @db.Timestamp()
+  delivery   Delivery  @relation(fields: [deliveryId], references: [id])
+  deliveryId String    @unique
+
+  @@index([orderAt])
+  @@index([status])
+  @@index([userId])
 }
 
 model User {
@@ -62,6 +95,8 @@ model User {
   wishList   WishList[]
   address    Address[]
   orders     Order[]
+  likes      Like[]
+  comments   Comment[]
 
   @@index([role])
   @@index([name])
@@ -99,45 +134,20 @@ model Email {
 }
 
 model Auth {
-  id           String    @id @default(uuid())
-  isInternal   Boolean   @default(false)
-  email        String    @unique
-  phone        String?   @unique @db.VarChar(20)
-  userId       String    @unique
-  otp          Int       @default(0)
-  isOtpRevoked Boolean   @default(false)
-  otpExpiresAt DateTime  @db.Timestamp()
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokens       Token[]
-  status       Status    @default(ACTIVE)
-  createdAt    DateTime  @default(now()) @db.Timestamp()
-  updatedAt    DateTime  @updatedAt @db.Timestamp()
-  deletedAt    DateTime? @db.Timestamp()
+  id         String    @id @default(uuid())
+  isInternal Boolean   @default(false)
+  clerkId    String    @unique
+  email      String    @unique
+  phone      String?   @unique @db.VarChar(20)
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     Status    @default(ACTIVE)
+  createdAt  DateTime  @default(now()) @db.Timestamp()
+  updatedAt  DateTime  @updatedAt @db.Timestamp()
+  deletedAt  DateTime? @db.Timestamp()
 
   @@index([isInternal])
   @@index([status])
-  @@index([deletedAt])
-}
-
-model Token {
-  id         String    @id @default(uuid())
-  token      String    @unique @db.Text
-  agent      String    @db.VarChar(255)
-  authId     String
-  auth       Auth      @relation(fields: [authId], references: [id], onDelete: Cascade)
-  issuedAt   DateTime  @default(now()) @db.Timestamp()
-  expiresAt  DateTime  @db.Timestamp()
-  lastUsedAt DateTime? @db.Timestamp()
-  revoked    Boolean   @default(false)
-  revokedAt  DateTime? @db.Timestamp()
-  revokedBy  String?   @db.VarChar(255)
-  deletedAt  DateTime? @db.Timestamp()
-  createdAt  DateTime  @default(now()) @db.Timestamp()
-  updatedAt  DateTime  @updatedAt @db.Timestamp()
-
-  @@index([authId, token])
-  @@index([revokedAt])
-  @@index([lastUsedAt])
   @@index([deletedAt])
 }
 
@@ -145,11 +155,14 @@ model Category {
   id    String @id @default(uuid())
   title String @unique
 
+  imageId   String
+  image     Image    @relation(fields: [imageId], references: [id])
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?
+
   deletedAt DateTime? @db.Timestamp()
   createdAt DateTime  @default(now()) @db.Timestamp()
   updatedAt DateTime  @updatedAt @db.Timestamp()
-  product   Product?  @relation(fields: [productId], references: [id])
-  productId String?
 }
 
 enum StockStatus {
@@ -158,17 +171,21 @@ enum StockStatus {
 }
 
 model Cart {
-  id        String    @id @default(uuid())
+  id       String @id @default(uuid())
+  quantity Int    @default(1)
+
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId String
-  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity  Int       @default(1)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
   deletedAt DateTime? @db.Timestamp()
   createdAt DateTime  @default(now()) @db.Timestamp()
   updatedAt DateTime  @updatedAt @db.Timestamp()
 
-  @@unique([userId, productId]) // ✅ Add this line
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
 }
 
 model Product {
@@ -179,12 +196,21 @@ model Product {
   discountedPrice Int
   stockStatus     StockStatus @default(IN_STOCK)
   imgs            Image?
-  categories      Category[]
-  deletedAt       DateTime?   @db.Timestamp()
-  createdAt       DateTime    @default(now()) @db.Timestamp()
-  updatedAt       DateTime    @updatedAt @db.Timestamp()
-  cart            Cart[]
-  wishList        WishList[]
+
+  categories Category[]
+  cart       Cart[]
+  wishList   WishList[]
+
+  deletedAt DateTime? @db.Timestamp()
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+  likes     Like[]
+  comments  Comment[]
+
+  @@index([deletedAt])
+  @@index([price])
+  @@index([stockStatus])
+  @@index([discountedPrice])
 }
 
 model Image {
@@ -194,6 +220,32 @@ model Image {
   thumbnails String[]
   previews   String[]
 
+  deletedAt DateTime?  @db.Timestamp()
+  createdAt DateTime   @default(now()) @db.Timestamp()
+  updatedAt DateTime   @updatedAt @db.Timestamp()
+  category  Category[]
+
+  @@index([productId])
+  @@index([deletedAt])
+}
+
+model Like {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  deletedAt DateTime? @db.Timestamp()
+  createdAt DateTime  @default(now()) @db.Timestamp()
+  updatedAt DateTime  @updatedAt @db.Timestamp()
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   deletedAt DateTime? @db.Timestamp()
   createdAt DateTime  @default(now()) @db.Timestamp()
   updatedAt DateTime  @updatedAt @db.Timestamp()

@@ -9,22 +9,13 @@ import { removeAllFromWishList } from "@/services/wishlist/removeAllFromWishList
 import { removeProductFromWishList } from "@/services/wishlist/removeFromWishList";
 import { handleApiErrors } from "@/utils/errors/handleApiErrors";
 import { requiredToken } from "@/utils/middleware/tokenMiddleware";
-import { verifyReqToken } from "@/utils/token/verifyReqToken";
 import { cartSchema } from "@/utils/validation/cart";
 
 export async function GET(req: Request) {
   try {
-    await requiredToken(req);
+    const user = await requiredToken(req);
 
-    const userId = await verifyReqToken(req);
-
-    const isUserExist = await getUserById({ id: userId });
-
-    if (!isUserExist) {
-      return ErrorResponse({ message: "User not found", status: 404 });
-    }
-
-    const wishList = await getUserWishList({ id: userId });
+    const wishList = await getUserWishList({ id: user.id });
 
     const data = wishList.map((item) => item.product);
 
@@ -39,7 +30,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const userId = await verifyReqToken(req);
+    const user = await requiredToken(req);
+
     const body = cartSchema.pick({ productId: true }).parse(await req.json());
 
     const isProductExist = await getProductById({ id: body.productId });
@@ -49,7 +41,7 @@ export async function POST(req: Request) {
     }
 
     const isAlreadyAdded = await getUserWishListProduct({
-      userId: userId,
+      userId: user.id,
       productId: body.productId,
     });
 
@@ -60,7 +52,7 @@ export async function POST(req: Request) {
     const addProduct = await addProductToUserWishList({
       data: {
         product: { connect: { id: body.productId } },
-        user: { connect: { id: userId } },
+        user: { connect: { id: user.id } },
       },
     });
 
@@ -75,15 +67,8 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    const userId = await verifyReqToken(req);
-
+    const user = await requiredToken(req);
     const body = cartSchema.pick({ productId: true }).parse(await req.json());
-
-    const user = await getUserById({ id: userId });
-
-    if (!user) {
-      return ErrorResponse({ message: "User not found", status: 404 });
-    }
 
     const product = await getProductById({ id: body.productId });
 
@@ -93,7 +78,7 @@ export async function PUT(req: Request) {
 
     const removeProduct = await removeProductFromWishList({
       where: {
-        userId,
+        userId: user.id,
         productId: body.productId,
       },
     });
@@ -106,16 +91,10 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const userId = await verifyReqToken(req);
-
-    const user = await getUserById({ id: userId });
-
-    if (!user) {
-      return ErrorResponse({ message: "User not found", status: 404 });
-    }
+    const user = await requiredToken(req);
 
     const removeProduct = await removeAllFromWishList({
-      where: { userId },
+      where: { userId: user.id },
     });
 
     return SuccessResponse({ data: removeProduct, message: "Product removed" });

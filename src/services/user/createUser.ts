@@ -1,27 +1,11 @@
-import { prisma } from '@/lib/db';
-
-type DataType = {
-  name: string;
-  phone?: string;
-  email: string;
-};
+import { Prisma } from "@/generated/prisma";
+import { prisma } from "@/lib/db";
+import { logger } from "@/utils/logger";
 
 type Props = {
-  data: DataType;
+  data: Prisma.AuthCreateInput;
 };
 
 export async function createUser({ data }: Props) {
-  return await prisma.auth.create({
-    data: {
-      phone: data.phone,
-      email: data.email,
-      otp: 0,
-      otpExpiresAt: new Date(Date.now() + 15 * 60 * 1000),
-      user: {
-        create: {
-          name: data.name,
-        },
-      },
-    },
-  });
+  return await prisma.auth.create({ data, include: { user: true } });
 }

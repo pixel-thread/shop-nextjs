@@ -134,45 +134,20 @@ model Email {
 }
 
 model Auth {
-  id           String    @id @default(uuid())
-  isInternal   Boolean   @default(false)
-  email        String    @unique
-  phone        String?   @unique @db.VarChar(20)
-  userId       String    @unique
-  otp          Int       @default(0)
-  isOtpRevoked Boolean   @default(false)
-  otpExpiresAt DateTime  @db.Timestamp()
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tokens       Token[]
-  status       Status    @default(ACTIVE)
-  createdAt    DateTime  @default(now()) @db.Timestamp()
-  updatedAt    DateTime  @updatedAt @db.Timestamp()
-  deletedAt    DateTime? @db.Timestamp()
+  id         String    @id @default(uuid())
+  isInternal Boolean   @default(false)
+  clerkId    String    @unique
+  email      String    @unique
+  phone      String?   @unique @db.VarChar(20)
+  userId     String    @unique
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status     Status    @default(ACTIVE)
+  createdAt  DateTime  @default(now()) @db.Timestamp()
+  updatedAt  DateTime  @updatedAt @db.Timestamp()
+  deletedAt  DateTime? @db.Timestamp()
 
   @@index([isInternal])
   @@index([status])
-  @@index([deletedAt])
-}
-
-model Token {
-  id         String    @id @default(uuid())
-  token      String    @unique @db.Text
-  agent      String    @db.VarChar(255)
-  authId     String
-  auth       Auth      @relation(fields: [authId], references: [id], onDelete: Cascade)
-  issuedAt   DateTime  @default(now()) @db.Timestamp()
-  expiresAt  DateTime  @db.Timestamp()
-  lastUsedAt DateTime? @db.Timestamp()
-  revoked    Boolean   @default(false)
-  revokedAt  DateTime? @db.Timestamp()
-  revokedBy  String?   @db.VarChar(255)
-  deletedAt  DateTime? @db.Timestamp()
-  createdAt  DateTime  @default(now()) @db.Timestamp()
-  updatedAt  DateTime  @updatedAt @db.Timestamp()
-
-  @@index([authId, token])
-  @@index([revokedAt])
-  @@index([lastUsedAt])
   @@index([deletedAt])
 }
 

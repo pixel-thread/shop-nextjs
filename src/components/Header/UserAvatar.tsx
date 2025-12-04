@@ -16,29 +16,14 @@ import {
 import { sliceTwoDigitFromEmail } from "@/utils/sliceTwoDigitFromEmail";
 import { useAuth } from "@/hooks/auth/useAuth";
 import Link from "next/link";
-import { useMutation } from "@tanstack/react-query";
-import http from "@/utils/http";
-import { AUTH_ENDPOINT } from "@/lib/constants/endpoints/auth";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth as useCAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Ternary } from "../Common/Ternary";
 
 export const UserAvatar = () => {
-  const { user, refresh } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
-  const { mutate: logout, isPending: isLoggingOut } = useMutation({
-    mutationFn: () => http.post(AUTH_ENDPOINT.POST_LOGOUT, {}),
-    onSuccess: (data) => {
-      if (data.success) {
-        toast({
-          title: data.message,
-        });
-        refresh();
-        return data;
-      }
-    },
-  });
+  const { signOut } = useCAuth();
 
   if (user) {
     return (
@@ -98,7 +83,7 @@ export const UserAvatar = () => {
           <DropdownMenuItem>Support</DropdownMenuItem>
           <DropdownMenuItem disabled>API</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled={isLoggingOut} onClick={() => logout()}>
+          <DropdownMenuItem onClick={() => signOut()}>
             Log out
             <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
           </DropdownMenuItem>
@@ -108,7 +93,7 @@ export const UserAvatar = () => {
   }
 
   return (
-    <Link href="/signin" className="flex items-center gap-2.5">
+    <Link href="/auth" className="flex items-center gap-2.5">
       <svg
         width="24"
         height="24"

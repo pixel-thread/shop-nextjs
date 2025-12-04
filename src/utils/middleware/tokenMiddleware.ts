@@ -1,8 +1,10 @@
-import { extendTokenExpireDateByDays } from "@/services/token/extendTokenExpireDateByDays";
-import { getActiveToken } from "@/services/token/getActiveToken";
 import { NextRequest } from "next/server";
 import { UnauthorizedError } from "../errors/unAuthError";
-
+import { verifyToken } from "@clerk/backend";
+import { env } from "@/env";
+import { getUniqueAuth } from "@/services/auth/getUniqueAuth";
+import { createUser } from "@/services/user/createUser";
+import { clerk } from "@/lib/clerk";
 /**
  * Middleware to validate and manage authentication tokens
  *
@@ -30,21 +32,40 @@ export async function requiredToken(req: NextRequest | Request) {
     throw new UnauthorizedError("Unauthorized");
   }
 
-  const activeToken = await getActiveToken({ token });
-  if (!activeToken) {
+  const claims = await verifyToken(token, {
+    secretKey: env.CLERK_SECRET_KEY,
+  });
+
+  if (!claims?.sub) {
     throw new UnauthorizedError("Unauthorized");
   }
 
-  // Calculate time difference
-  const now = Date.now();
-  const expiresAt = new Date(activeToken.expiresAt).getTime();
-  const threeDaysInMs = 1 * 24 * 60 * 60 * 1000;
+  const auth = await getUniqueAuth({ where: { clerkId: claims.sub } });
 
-  // Extend only if token expires within the next 3 days
-  if (expiresAt - now <= threeDaysInMs) {
-    await extendTokenExpireDateByDays({
-      id: activeToken.id,
-      token: activeToken.token,
+  if (!auth) {
+    const clerkUser = await clerk.users.getUser(claims.sub);
+
+    if (!clerkUser) {
+      throw new UnauthorizedError("Unauthorized");
+    }
+
+    const user = await createUser({
+      data: {
+        clerkId: clerkUser.id,
+        email: clerkUser?.primaryEmailAddress?.emailAddress,
+        isInternal: false,
+        phone: clerkUser?.primaryPhoneNumber?.phoneNumber || "",
+        user: {
+          create: {
+            name: clerkUser.firstName,
+            profilePic: clerkUser.imageUrl,
+          },
+        },
+      },
     });
+
+    return user.user;
   }
+
+  return auth.user;
 }

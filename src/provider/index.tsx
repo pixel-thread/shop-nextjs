@@ -9,27 +9,30 @@ import { Toaster } from "@/components/ui/toaster";
 import { Layout } from "@/components/Layout/Layout";
 import { CartProvider } from "./cart";
 import { WishlistProvider } from "./wishlist";
+import { ClerkProvider } from "@clerk/nextjs";
 
 type MainProviderProps = Readonly<{ children: React.ReactNode }>;
 
 export const MainProvider = ({ children }: MainProviderProps) => {
   return (
-    <CookiesProvider>
-      <TQueryProvider>
-        <AuthProvider>
-          <RoleBaseRoute>
-            <CartProvider>
-              <WishlistProvider>
-                <Layout>{children}</Layout>
-                <QuickViewModal />
-                <CartSidebarModal />
-                <PreviewSliderModal />
-              </WishlistProvider>
-            </CartProvider>
-            <Toaster />
-          </RoleBaseRoute>
-        </AuthProvider>
-      </TQueryProvider>
-    </CookiesProvider>
+    <ClerkProvider>
+      <CookiesProvider>
+        <TQueryProvider>
+          <AuthProvider>
+            <RoleBaseRoute>
+              <CartProvider>
+                <WishlistProvider>
+                  <Layout>{children}</Layout>
+                  <QuickViewModal />
+                  <CartSidebarModal />
+                  <PreviewSliderModal />
+                </WishlistProvider>
+              </CartProvider>
+              <Toaster />
+            </RoleBaseRoute>
+          </AuthProvider>
+        </TQueryProvider>
+      </CookiesProvider>
+    </ClerkProvider>
   );
 };

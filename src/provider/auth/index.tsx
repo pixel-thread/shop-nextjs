@@ -2,12 +2,12 @@
 import { AuthContext } from "@/context/auth";
 import { Prisma } from "@/generated/prisma";
 import { AUTH_ENDPOINT } from "@/lib/constants/endpoints/auth";
-import { AUTH_TOKEN_KEY } from "@/lib/constants/token";
 import { AuthContextT } from "@/types/auth/context";
 import http from "@/utils/http";
-import { useMutation } from "@tanstack/react-query";
-import React, { useEffect } from "react";
-import { useCookies } from "react-cookie";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import React, { useCallback, useEffect } from "react";
+import { useAuth } from "@clerk/nextjs";
+import axiosInstance from "@/utils/api";
 
 type AuthProviderProps = { children: Readonly<Required<React.ReactNode>> };
 
@@ -16,29 +16,42 @@ type UserT = Required<
 >;
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = React.useState<UserT | null>(null);
-  const [cookies] = useCookies([AUTH_TOKEN_KEY]);
-  const [isInit, setIsInit] = React.useState(true);
+  const { isSignedIn, getToken } = useAuth();
+  const [isTokenSet, setIsTokenSet] = React.useState(false);
 
-  const { isPending: isLoadingMe, mutate } = useMutation({
-    mutationFn: () => http.get<UserT>(AUTH_ENDPOINT.GET_ME),
-    onSuccess: (data) => {
-      if (data.success) {
-        setUser(data.data);
-        return data.data;
-      }
-      setUser(null);
-      return data;
-    },
-    onSettled: () => setIsInit(false),
+  const {
+    data: user,
+    isFetching: isLoadingMe,
+    refetch: mutate,
+  } = useQuery({
+    queryKey: ["user"],
+    queryFn: () => http.get<UserT>(AUTH_ENDPOINT.GET_ME),
+    select: (data) => data?.data,
+    enabled: isTokenSet,
   });
 
-  useEffect(() => {
-    if (cookies.AuthToken && isInit) {
-      setIsInit(false);
-      mutate();
+  const verifyUser = useCallback(async () => {
+    if (isSignedIn) {
+      const token = await getToken({ template: "jwt" });
+      if (token) {
+        axiosInstance.defaults.headers.common["Authorization"] =
+          `Bearer ${token}`;
+        setIsTokenSet(true);
+      }
     }
-  }, [cookies.AuthToken, isInit, mutate]);
+  }, [isSignedIn, getToken]);
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      axiosInstance.defaults.headers.common["Authorization"] = "";
+    }
+  }, [isSignedIn]);
+
+  useEffect(() => {
+    if (isSignedIn) {
+      verifyUser();
+    }
+  }, [isSignedIn]);
 
   const value: AuthContextT = {
     user: user,

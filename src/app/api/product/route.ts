@@ -41,12 +41,6 @@ export async function POST(req: Request) {
             previews: body.imgs?.previews,
           },
         },
-        categories: {
-          connectOrCreate: {
-            where: { title: body.categories.title },
-            create: { title: body.categories.title },
-          },
-        },
       },
     });
 

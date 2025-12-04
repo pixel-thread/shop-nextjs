@@ -1,6 +1,6 @@
 "use client";
+import { SignIn } from "@clerk/nextjs";
 import { useState } from "react";
-import { SignInForm } from "../Auth/Signin/SignInForm";
 
 const Login = () => {
   const [dropdown, setDropdown] = useState(true);
@@ -40,13 +40,12 @@ const Login = () => {
       <div
         className={`${
           dropdown ? "block" : "hidden"
-        } pt-7.5 pb-8.5 px-4 sm:px-8.5`}
+        } pt-7.5 pb-8.5 px-4 sm:px-8.5 flex items-center justify-center flex-col`}
       >
         <p className="text-custom-sm mb-6">
           If you didn&apos;t Logged in, Please Log in first.
         </p>
-
-        <SignInForm />
+        <SignIn signUpUrl="/auth/sign-up" />
       </div>
     </div>
   );

@@ -1,13 +1,38 @@
 "use client";
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import Breadcrumb from "../Common/Breadcrumb";
 import Login from "./Login";
 import Shipping from "./Shipping";
-import PaymentMethod from "./PaymentMethod";
 import { useCart } from "@/hooks/cart/useCart";
 import { totalProductPrice } from "@/types/totalProductPrice";
 import { useAuth } from "@/hooks/auth/useAuth";
 import { Ternary } from "../Common/Ternary";
+import { Button } from "../ui/button";
+
+const RAZORPAY_KEY_ID = "rzp_test_Rdfa1pxFIC6Fxt";
+
+var options = {
+  key: RAZORPAY_KEY_ID, // Enter the Key ID generated from the Dashboard
+  amount: "50000", // Amount is in currency subunits.
+  currency: "INR",
+  name: "Acme Corp", //your business name
+  description: "Test Transaction",
+  image: "https://example.com/your_logo",
+  // order_id: "order_9A33XWu170gUtm", // This is a sample Order ID. Pass the `id` obtained in the response of Step 1
+  callback_url: "http://localhost:3000/",
+  prefill: {
+    //We recommend using the prefill parameter to auto-fill customer's contact information especially their phone number
+    name: "Gaurav Kumar", //your customer's name
+    email: "gaurav.kumar@example.com",
+    contact: "+919876543210", //Provide the customer's phone number for better conversion rates
+  },
+  notes: {
+    address: "Razorpay Corporate Office",
+  },
+  theme: {
+    color: "#3399cc",
+  },
+};
 
 const Checkout = () => {
   const { user } = useAuth();
@@ -108,15 +133,10 @@ const Checkout = () => {
               {/* <ShippingMethod /> */}
 
               {/* <!-- payment box --> */}
-              <PaymentMethod />
+              {/* <PaymentMethod /> */}
 
               {/* <!-- checkout button --> */}
-              <button
-                type="submit"
-                className="w-full flex justify-center font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark mt-7.5"
-              >
-                Process to Checkout
-              </button>
+              <RazorpayButton options={options} />
             </div>
           </div>
         </div>
@@ -126,3 +146,23 @@ const Checkout = () => {
 };
 
 export default Checkout;
+
+function RazorpayButton({ options, label = "Pay" }) {
+  const handlePayment = useCallback(() => {
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.on("payment.failed", function (response: any) {
+      alert(response.error.description);
+    });
+    paymentObject.open();
+  }, [options]);
+
+  return (
+    <Button
+      variant="default"
+      className="w-full mt-2 py-7"
+      onClick={handlePayment}
+    >
+      {label}
+    </Button>
+  );
+}

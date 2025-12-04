@@ -1,5 +1,6 @@
 import { useCart } from "@/hooks/cart/useCart";
 import { totalProductPrice } from "@/types/totalProductPrice";
+import Link from "next/link";
 import React from "react";
 
 const OrderSummary = () => {
@@ -55,12 +56,12 @@ const OrderSummary = () => {
           </div>
 
           {/* <!-- checkout button --> */}
-          <button
-            type="submit"
+          <Link
+            href="/checkout"
             className="w-full flex justify-center font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark mt-7.5"
           >
             Process to Checkout
-          </button>
+          </Link>
         </div>
       </div>
     </div>

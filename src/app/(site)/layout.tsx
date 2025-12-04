@@ -6,6 +6,7 @@ import "../css/style.css";
 import PreLoader from "@/components/Common/PreLoader";
 import { MainProvider } from "@/provider";
 import { Ternary } from "@/components/Common/Ternary";
+import Script from "next/script";
 
 export default function RootLayout({
   children,
@@ -25,6 +26,10 @@ export default function RootLayout({
           condition={loading}
           ifTrue={<PreLoader />}
           ifFalse={<MainProvider>{children}</MainProvider>}
+        />
+        <Script
+          id="razorpay-checkout-js"
+          src="https://checkout.razorpay.com/v1/checkout.js"
         />
       </body>
     </html>
